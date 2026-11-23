@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bài tập 23 - Game kiểm tra tốc độ</title>
+<style>
+  :root {
+    --bg: #14213d;
+    --arena: #fdf6e3;
+    --target: #e63946;
+    --ink: #fdf6e3;
+    --accent: #fca311;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+    padding: 16px;
+  }
+  h1 { margin: 0; font-size: 1.6rem; }
+  .info { display: flex; gap: 32px; font-size: 1.3rem; }
+  .info b { color: var(--accent); font-size: 1.6rem; }
+  #arena {
+    position: relative;
+    width: 600px;
+    height: 400px;
+    max-width: 100%;
+    background: var(--arena);
+    border: 4px solid var(--accent);
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: crosshair;
+  }
+  #target {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--target);
+    border: 4px solid #fff;
+    box-shadow: 0 0 0 3px var(--target);
+    display: none;
+    cursor: pointer;
+  }
+  #overlay {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    background: rgba(20, 33, 61, .85);
+    color: var(--ink);
+    text-align: center;
+    font-size: 1.5rem;
+  }
+  #overlay strong { font-size: 3rem; color: var(--accent); }
+  button {
+    font: inherit;
+    font-size: 1.1rem;
+    font-weight: bold;
+    padding: 10px 28px;
+    border: 0;
+    border-radius: 6px;
+    background: var(--accent);
+    color: #14213d;
+    cursor: pointer;
+  }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  button:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+</style>
+</head>
+<body>
+  <h1>Game kiểm tra tốc độ</h1>
+  <div class="info">
+    <div>Điểm: <b id="score">0</b></div>
+    <div>Thời gian: <b id="time">30</b>s</div>
+  </div>
+
+  <div id="arena">
+    <div id="target"></div>
+    <div id="overlay"></div>
+  </div>
+
+  <button id="startBtn">Bắt đầu trò chơi</button>
+
+<script>
+  const GAME_TIME = 30;      // giây
+  const MOVE_INTERVAL = 1000; // mục tiêu tự đổi vị trí mỗi 1 giây
+
+  const arena = document.getElementById('arena');
+  const target = document.getElementById('target');
+  const overlay = document.getElementById('overlay');
+  const scoreEl = document.getElementById('score');
+  const timeEl = document.getElementById('time');
+  const startBtn = document.getElementById('startBtn');
+
+  let score = 0;
+  let timeLeft = GAME_TIME;
+  let running = false;
+  let countdownId = null;
+  let moveId = null;
+
+  // Đặt mục tiêu tại vị trí top/left ngẫu nhiên trong #arena
+  function moveTarget() {
+    const maxLeft = arena.clientWidth - target.offsetWidth;
+    const maxTop = arena.clientHeight - target.offsetHeight;
+    target.style.left = Math.floor(Math.random() * (maxLeft + 1)) + 'px';
+    target.style.top = Math.floor(Math.random() * (maxTop + 1)) + 'px';
+  }
+
+  // Đặt lại bộ đếm 1 giây cho việc đổi vị trí
+  function restartMoveTimer() {
+    clearInterval(moveId);
+    moveId = setInterval(moveTarget, MOVE_INTERVAL);
+  }
+
+  function startGame() {
+    score = 0;
+    timeLeft = GAME_TIME;
+    running = true;
+    scoreEl.textContent = score;
+    timeEl.textContent = timeLeft;
+    overlay.style.display = 'none';
+    target.style.display = 'block';
+    startBtn.disabled = true;
+
+    moveTarget();
+    restartMoveTimer();
+
+    countdownId = setInterval(() => {
+      timeLeft--;
+      timeEl.textContent = timeLeft;
+      if (timeLeft <= 0) endGame();
+    }, 1000);
+  }
+
+  function endGame() {
+    running = false;
+    clearInterval(countdownId);
+    clearInterval(moveId);
+    target.style.display = 'none';
+    startBtn.disabled = false;
+    startBtn.textContent = 'Chơi lại';
+    overlay.innerHTML = 'Hết giờ!<br>Tổng điểm của bạn<br><strong>' + score + '</strong>';
+    overlay.style.display = 'flex';
+  }
+
+  // Click trúng mục tiêu: +1 điểm, đổi vị trí ngay lập tức
+  target.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!running) return;
+    score++;
+    scoreEl.textContent = score;
+    moveTarget();
+    restartMoveTimer();
+  });
+
+  startBtn.addEventListener('click', startGame);
+</script>
+</body>
+</html>
